@@ -14,7 +14,9 @@ import torch.optim as optim
 import torch.utils.model_zoo as model_zoo
 from torchvision import datasets, transforms
 from loadModelMNIST import *
+from ProjectImageHandler import *
 
+classes = [0,1,2,3,4,5,6,7,8,9]
 
 def get_test_acc(model,test_loader):
     correct = 0
@@ -29,6 +31,12 @@ def get_test_acc(model,test_loader):
         correct += (predicted == labels.data).sum()
     return correct / total
 
+def predictImageLabel(model,image):
+    #Note: image = Variable(tensorImage.cuda())
+    output = model(image)
+    _,idx = torch.max(output,1)
+    label = classes[idx.data[0]]
+    return label    
 
 if __name__ == "__main__":
     BATCH_SIZE = 32
@@ -45,3 +53,23 @@ if __name__ == "__main__":
     test_acc = get_test_acc(model,test_loader)     
     print('test_acc %.5f' % (test_acc))
     
+    print("\n")
+    for i in range(0,10):
+        tensorImage,label = testset[i]
+        print("Testing image with label " + str(label))
+        image = Variable(tensorImage.cuda())
+        pred = predictImageLabel(model,image)
+        print("Prediction: " + str(pred))
+
+    print("\n\nRandomly rotating images prior to predictions:")
+    ih = ProjectImageHandler()
+    for i in range(10,20):
+        tensorImage,label = testset[i]
+        print("Testing image with label " + str(label))
+        tensorImage = ih.unnormalizeTensor(tensorImage)
+        tensorImage = ih.randomRotateTensor(tensorImage)
+        tensorImage = ih.normalizeTensor(tensorImage)
+        image = Variable(tensorImage.cuda())
+        pred = predictImageLabel(model,image)
+        print("Prediction: " + str(pred))
+        

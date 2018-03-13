@@ -57,6 +57,8 @@ def pix_mod_run(thr_cut, thr_new, nb, ev_oth, tot_im, dump, dataset=mnist.load_d
 
 	if dump == True:
 		name = str(thr_cut) + "_" + str(thr_new) + "_" + str(nb) + "_" + str(ev_oth) + "_" + str(tot_im)
+		if not os.path.exists("./data/"):
+			os.makedirs("data")
 		print("Dumping into file...")
 		pickle.dump( ((mod_x, mod_y), (mod_x_test, mod_y_test)), open( "./data/mnist_pix_mod_" + name + ".p", "wb" ))
 		print("Done\n")

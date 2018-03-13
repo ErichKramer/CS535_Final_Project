@@ -17,6 +17,8 @@ def gauss_gen(sig, tot_im, dump, dataset=mnist.load_data()):
 	print("Done\n")
 
 	if dump == True:
+		if not os.path.exists("./data/"):
+			os.makedirs("data")
 		print("Dumping into file...")
 		pickle.dump( ((blurred_x, blurred_y), (blurred_x_test, blurred_y_test)), open( "./data/mnist_blurred_" + str(sig) + "_" + str(tot_im) + ".p", "wb" ))
 		print("Done\n")

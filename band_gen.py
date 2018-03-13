@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import random
 import time
+import os
 
 def band_gen(im, start_pos, end_pos, new_val, same):
 	if same == True:
@@ -33,6 +34,8 @@ def band_gen_run(start_pos, end_pos, new_val, same, tot_im, dump, dataset=mnist.
 
 	if dump == True:
 		name = str(start_pos) + "_" + str(end_pos) + "_" + str(new_val) + "_" + str(same) + "_" + str(tot_im)
+		if not os.path.exists("./data/"):
+			os.makedirs("data")
 		print("Dumping into file...")
 		pickle.dump( ((mod_x, mod_y), (mod_x_test, mod_y_test)), open( "./data/mnist_band_gen_" + name + ".p", "wb" ))
 		print("Done\n")

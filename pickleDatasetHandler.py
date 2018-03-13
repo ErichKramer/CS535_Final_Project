@@ -29,7 +29,7 @@ class pickleDataset(torch.utils.data.Dataset):
         self.validate_correct_data(pickle_data)
         self.pDataset = []
         i = int(not train)  #index 0 = Train 1 = test
-        for j in range(0,len(pickle_data[i])):
+        for j in range(0,len(pickle_data[i][0])):
             img = PIL.Image.fromarray(pickle_data[i][0][j])
             label = pickle_data[i][1][j]
             self.pDataset.append([img,label])
@@ -68,9 +68,9 @@ if __name__ == "__main__":
     # [ [ [train_img][train_labels] ] [ [test_img][test_labels] ] ]
     pd = pickleDataset(pickle_file,train=False,transform=transform)
 
-    sample = pd[0]
-    print(np.array(pd.pDataset[0][0]))
-    print(pd.pDataset[0][1])
-    print(sample[0])
-    print(sample[1])
+    #sample = pd[0]
+    #print(np.array(pd.pDataset[0][0]))
+    #print(pd.pDataset[0][1])
+    #print(sample[0])
+    #print(sample[1])
 

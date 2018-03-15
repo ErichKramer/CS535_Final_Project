@@ -102,8 +102,13 @@ if __name__ == "__main__":
 
     #adv_exam = MNIST[0][0].cuda()+r
 
-    tmp = image.cuda() + r.data
+    tmp = image + r.data.cpu()#needs to be for numpy visualizing
     manip = PM()
+
+    manip.unnormalizeTensor(tmp)
+    
+    #numpy array is (1,28,28), imshow wants 2D
+    plt.imshow(tmp.cpu().numpy()[0], cmap='gray') 
 
     pdb.set_trace()
 

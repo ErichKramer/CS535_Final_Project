@@ -356,7 +356,7 @@ def gaussian_training_run(noiseFile="adversary_SGD_Testset",BATCH_SIZE=32,MAX_EP
         plt.clf()
 
     plt.title("Gaussian Effects on Loss of New MNIST Model")
-    plt.xlabel("epoch")
+    plt.xlabel("sigma")
     plt.ylabel("loss")
     train_hdl1, = plt.plot(sig_arr,tn_sigLoss,label="train")
     test_hdl1, = plt.plot(sig_arr,tst_sigLoss,label="test")
@@ -366,7 +366,7 @@ def gaussian_training_run(noiseFile="adversary_SGD_Testset",BATCH_SIZE=32,MAX_EP
     plt.clf()
     
     plt.title("Gaussian Effects on Accuracies of New MNIST Model")
-    plt.xlabel("epoch")
+    plt.xlabel("sigma")
     plt.ylabel("accuracy")
     train_hdl2, = plt.plot(sig_arr,tn_sigAcc,label="train")
     test_hdl2, = plt.plot(sig_arr,tst_sigAcc,label="test")

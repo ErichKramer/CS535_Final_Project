@@ -27,6 +27,7 @@ def get_accuracy(dataSet):
     correct = 0
     total = len(dataSet)
     pm = PM(mean=(0.1307,),std=(0.3081,))
+    model.eval()
     for i in (range(len(dataSet))):
         image,label = dataSet[i]
         imgVar = Variable(image).cuda()
@@ -77,6 +78,7 @@ def normalize_dataset(dataSet,mean=(0.1307,),std=(0.3081,)):
 
 def predictImageLabel(model,image):
     #Note: image = Variable(tensorImage.cuda())
+    model.eval()
     output = model(image)
     _,idx = torch.max(output,1)
     label = classes[idx.data[0]]
@@ -106,14 +108,35 @@ if __name__ == "__main__":
     noiseFile = "adversary_SGD_Testset"
     noise,advLabels = readNoiseFile(noiseFile)
 
+    outFile = "adversarial_rotate.txt"
+
     model = loadModelMNIST.loadModel().cuda()
+    model.eval()
 
     transform = transforms.Compose( [transforms.ToTensor(), 
             transforms.Normalize( (0.1307,), (0.3081,)) ] )
 
-
     angles = []
     accuracies = []
+
+    for i in range(0,361):
+        angle = i
+
+        MNIST = torchvision.datasets.MNIST( root='./data', train=False, 
+                                            download=True,transform=transform)
+
+        #MNIST = add_adversarial_noise(MNIST,noise)
+        MNIST = unnormalize_dataset(MNIST,mean=(0.1307,),std=(0.3081,))
+        MNIST = rotate_dataset(MNIST,angle=angle)
+        MNIST = normalize_dataset(MNIST,mean=(0.1307,),std=(0.3081,))
+        accuracy = get_accuracy(MNIST)
+
+        angles.append(angle)
+        accuracies.append(accuracy)
+        print("angle = %.1f\taccuracy = %.3f%%" % (angle,accuracy))
+
+    adv_angles = []
+    adv_accuracies = []
 
     for i in range(0,361):
         angle = i
@@ -127,14 +150,24 @@ if __name__ == "__main__":
         MNIST = normalize_dataset(MNIST,mean=(0.1307,),std=(0.3081,))
         accuracy = get_accuracy(MNIST)
 
-        angles.append(angle)
-        accuracies.append(accuracy)
+        adv_angles.append(angle)
+        adv_accuracies.append(accuracy)
         print("angle = %.1f\taccuracy = %.3f%%" % (angle,accuracy))
 
 
-    plt.title("Accuracy with Rotations applied to Adversarial Images")
+    plt.title("Accuracy with Rotations applied to Test and Adversarial Images")
     plt.xlabel("degrees")
     plt.ylabel("accuracy")
-    handle, = plt.plot(angles,accuracies,"r")
+    test_handle, = plt.plot(angles,accuracies,label="test")
+    adv_handle, = plt.plot(adv_angles,adv_accuracies,label="adversarial")
+    plt.legend(handles=[test_handle,adv_handle],loc=1)
     plt.savefig("adversarial_rotate.png")
-#    plt.show() 
+
+    f = open(outFile,"w")
+    for i in range(len(angles)):
+        if angles[i] == adv_angles[i]:
+            f.write("%.2f\t%.5f\t%.5f\n" % (angles[i],accuracies[i],adv_accuracies[i]))
+        else:
+            print("Error: sigma's not equal between regular and adversarial test sets")
+    f.close()
+

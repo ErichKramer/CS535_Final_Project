@@ -26,6 +26,7 @@ def get_accuracy(dataSet):
     correct = 0
     total = len(dataSet)
     pm = PM(mean=(0.1307,),std=(0.3081,))
+    model.eval()
     for i in (range(len(dataSet))):
         image,label = dataSet[i]
         imgVar = Variable(image).cuda()
@@ -72,6 +73,7 @@ def normalize_dataset(dataSet,mean=(0.1307,),std=(0.3081,)):
 
 def predictImageLabel(model,image):
     #Note: image = Variable(tensorImage.cuda())
+    model.eval()
     output = model(image)
     _,idx = torch.max(output,1)
     label = classes[idx.data[0]]
@@ -100,7 +102,10 @@ if __name__ == "__main__":
     noiseFile = "adversary_SGD_Testset"
     noise,advLabels = readNoiseFile(noiseFile)
 
+    outFile = "adversarial_blur.txt"
+
     model = loadModelMNIST.loadModel().cuda()
+    model.eval()
 
     transform = transforms.Compose( [transforms.ToTensor(), 
             transforms.Normalize( (0.1307,), (0.3081,)) ] )
@@ -115,7 +120,7 @@ if __name__ == "__main__":
         MNIST = torchvision.datasets.MNIST( root='./data', train=False, 
                                             download=True,transform=transform)
 
-        MNIST = add_adversarial_noise(MNIST,noise)
+        #MNIST = add_adversarial_noise(MNIST,noise)
         MNIST = unnormalize_dataset(MNIST,mean=(0.1307,),std=(0.3081,))
         MNIST = gaussianBlur_dataset(MNIST,sig=sig)
         MNIST = normalize_dataset(MNIST,mean=(0.1307,),std=(0.3081,))
@@ -125,10 +130,40 @@ if __name__ == "__main__":
         accuracies.append(accuracy)
         print("sig = %.1f\taccuracy = %.3f%%" % (sig,accuracy))
 
+    adv_sigmas = []
+    adv_accuracies = []
 
-    plt.title("Accuracy with Gaussian Blur applied to Adversarial Images")
+    for i in range(0,51):
+        sig = i * 0.1
+
+        MNIST = torchvision.datasets.MNIST( root='./data', train=False, 
+                                            download=True,transform=transform)
+
+        MNIST = add_adversarial_noise(MNIST,noise)
+        MNIST = unnormalize_dataset(MNIST,mean=(0.1307,),std=(0.3081,))
+        MNIST = gaussianBlur_dataset(MNIST,sig=sig)
+        MNIST = normalize_dataset(MNIST,mean=(0.1307,),std=(0.3081,))
+        accuracy = get_accuracy(MNIST)
+
+        adv_sigmas.append(sig)
+        adv_accuracies.append(accuracy)
+        print("sig = %.1f\taccuracy = %.3f%%" % (sig,accuracy))
+
+
+
+    plt.title("Accuracy with Gaussian Blur applied to Test and Adversarial Images")
     plt.xlabel("sigma")
     plt.ylabel("accuracy")
-    handle, = plt.plot(sigmas,accuracies,"r")
+    test_handle, = plt.plot(sigmas,accuracies,label="test")
+    adv_handle, = plt.plot(adv_sigmas,adv_accuracies,label="adversarial")
+    plt.legend(handles=[test_handle,adv_handle],loc=1)
     plt.savefig("adversarial_blur.png")
-#    plt.show() 
+
+    f = open(outFile,"w")
+    for i in range(len(sigmas)):
+        if sigmas[i] == adv_sigmas[i]:
+            f.write("%.2f\t%.5f\t%.5f\n" % (sigmas[i],accuracies[i],adv_accuracies[i]))
+        else:
+            print("Error: sigma's not equal between regular and adversarial test sets")
+    f.close()
+    

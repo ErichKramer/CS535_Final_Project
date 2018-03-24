@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import print_function
 
 import sys
+import pdb
 import os
 import torch
 from torch.autograd import Variable
@@ -39,7 +40,11 @@ class MLP(nn.Module):
         layers['out'] = nn.Linear(current_dims, n_class)
 
         self.model= nn.Sequential(layers)
-        print(self.model)
+
+    def gaussNoise(self, image, stddev=.5):
+        #generate random noise to overlay on image of dims
+        #pdb.set_trace()
+        return Variable( torch.randn( image.size()).cuda() *stddev) 
 
     def forward(self, input):
         input = input.view(input.size(0), -1)
@@ -54,6 +59,32 @@ def loadModel():
     state_dict = model_zoo.load_url(model_base_url + mnist_model,model_dir)
     model.load_state_dict(state_dict)
     return model
+
+
+def loadRandom():
+    input_dims = 784
+    n_hiddens=[256, 256]
+    n_class=10
+
+    #use gauss
+    def randomForward(self, input):
+        input = input.view(input.size(0), -1)
+        assert input.size(1) == self.input_dims
+        input = input + self.gaussNoise(input)
+        return self.model.forward(input)
+
+    MLP.forward = randomForward
+    model = MLP(input_dims, n_hiddens, n_class)
+    
+
+    state_dict = model_zoo.load_url(model_base_url + mnist_model,model_dir)
+    model.load_state_dict(state_dict)
+    return model
+
+
+
+
+
 
 if __name__ == "__main__":
     model = loadModel()

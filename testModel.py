@@ -41,7 +41,7 @@ def predictImageLabel(model,image):
 if __name__ == "__main__":
     BATCH_SIZE = 32
 
-    model = loadModel().cuda()
+    model = loadRandom().cuda()
 
     transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Normalize((0.1307,), (0.3081,))

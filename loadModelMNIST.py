@@ -13,6 +13,7 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.optim as optim
 import torch.utils.model_zoo as model_zoo
+import cPickle as pickle
 
 model_base_url = "http://ml.cs.tsinghua.edu.cn/~chenxi/pytorch-models/"  #prebuilt models
 mnist_model = "mnist-b07bb66b.pth"
@@ -44,7 +45,7 @@ class MLP(nn.Module):
     def gaussNoise(self, image, stddev=.5):
         #generate random noise to overlay on image of dims
         #pdb.set_trace()
-        return Variable( torch.randn( image.size()).cuda() *stddev) 
+        return Variable( torch.randn( image.size()) *stddev) 
 
     def forward(self, input):
         input = input.view(input.size(0), -1)
@@ -60,8 +61,33 @@ def loadModel():
     model.load_state_dict(state_dict)
     return model
 
+#function to retrain network after random noise
+def retrain(model, epochs=5):
+    #disgustingly bake everything in
+    model.train()
+    opt = optim.SGD(model.parameters(), lr=.01, weight_decay=.0001, momentum=.9)
+    transform = transforms.Compose( [transforms.ToTensor(),
+                transforms.Normalize( (0.1307,), (0.3081,)) ] )
+
+    data = torchvision.datasets.MNIST( root='./data', train=True, download=True, 
+            transform=transform)
+    data_loader = torch.utils.data.DataLoader(data, batch_size=32, shuffle=False, num_workers=2)
+    for epoch in range(epochs):
+        for idx, (data,target) in enumerate(data_loader):
+            data, target = Variable(data), Variable(target)
+            opt.zero_grad()
+            output = model(data)
+            loss = F.cross_entropy(output, target)
+            loss.backward()
+            opt.step()
+
+    model.eval()
+    return
+
 
 def loadRandom():
+    return pickle.load(open("retrained.pt", "rb") )
+
     input_dims = 784
     n_hiddens=[256, 256]
     n_class=10
@@ -75,10 +101,13 @@ def loadRandom():
 
     MLP.forward = randomForward
     model = MLP(input_dims, n_hiddens, n_class)
-    
-
     state_dict = model_zoo.load_url(model_base_url + mnist_model,model_dir)
     model.load_state_dict(state_dict)
+
+    retrain(model)
+    #model is now loaded training values + random noise, not yet trained
+
+    pdb.set_trace()
     return model
 
 

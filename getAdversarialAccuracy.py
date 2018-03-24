@@ -44,7 +44,7 @@ def readNoiseFile(noiseFile):
 
 if __name__ == "__main__":
 
-    model = loadModelMNIST.loadModel().cuda()
+    model = loadModelMNIST.loadRandom().cuda()
     model.eval()
 
     transform = transforms.Compose( [transforms.ToTensor(), 
